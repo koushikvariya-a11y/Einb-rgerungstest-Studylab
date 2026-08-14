@@ -3,7 +3,7 @@
 // On-demand runtime caching for question images.
 // Strictly excludes Firebase Auth, Firestore, OAuth, Analytics, and API requests.
 
-const CACHE_VERSION = 'v1.1.0';
+const CACHE_VERSION = 'v1.2.0';
 const SHELL_CACHE = `studylab-shell-${CACHE_VERSION}`;
 const IMAGES_CACHE = `studylab-images-${CACHE_VERSION}`;
 
@@ -66,8 +66,9 @@ function isExcluded(request, url) {
   return false;
 }
 
-// 1. Install Event: Precache app shell and Vite assets
+// 1. Install Event: Precache app shell, Vite assets, and immediately skip waiting
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     (async () => {
       const shellCache = await caches.open(SHELL_CACHE);
@@ -85,7 +86,7 @@ self.addEventListener('message', (event) => {
   }
 });
 
-// 2. Activate Event: Claim clients and purge stale caches
+// 2. Activate Event: Claim clients and purge all stale caches (including studylab-*-v1.1.0)
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     (async () => {
@@ -147,23 +148,23 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Question Images: On-demand Runtime Cache-First with Network Fallback
+  // Question Images: On-demand Runtime Cache with Network-First/Stale-While-Revalidate replacement
   if (url.pathname.includes('/question-images/')) {
     event.respondWith(
       (async () => {
         const cache = await caches.open(IMAGES_CACHE);
+        try {
+          const networkResponse = await fetch(request);
+          if (networkResponse && networkResponse.status === 200) {
+            cache.put(request, networkResponse.clone());
+            return networkResponse;
+          }
+        } catch (fetchErr) {
+          // Fall back to cache when offline
+        }
         const cached = await cache.match(request);
         if (cached) return cached;
-
-        try {
-          const response = await fetch(request);
-          if (response && response.status === 200) {
-            cache.put(request, response.clone());
-          }
-          return response;
-        } catch (err) {
-          return cached || new Response('', { status: 404 });
-        }
+        return new Response('', { status: 404 });
       })()
     );
     return;
