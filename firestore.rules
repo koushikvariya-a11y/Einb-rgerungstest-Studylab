@@ -1,0 +1,89 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Global Safety Net Default-Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Global Primitives & Identity Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Profile Schema Blueprint Validation
+    function isValidProfile(data, userId) {
+      return data.userId == userId
+        && data.selectedState is string
+        && data.selectedState.size() <= 64
+        && data.practiceIndex is int
+        && data.practiceIndex >= 0
+        && data.practiceIndex <= 460
+        && data.updatedAt is string
+        && data.updatedAt.size() <= 60;
+    }
+
+    // Practice Attempt Schema Blueprint Validation
+    function isValidAttempt(data) {
+      return data.questionId is int
+        && data.questionId >= 1
+        && data.questionId <= 460
+        && data.answer is string
+        && (data.answer == 'a' || data.answer == 'b' || data.answer == 'c' || data.answer == 'd')
+        && data.isCorrect is bool
+        && data.timestamp is string
+        && data.timestamp.size() <= 60;
+    }
+
+    // Users Collection Match Block
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow create: if isOwner(userId)
+        && isValidId(userId)
+        && incoming().keys().hasAll(['userId', 'selectedState', 'practiceIndex', 'updatedAt'])
+        && incoming().keys().size() == 4
+        && isValidProfile(incoming(), userId);
+      allow update: if isOwner(userId)
+        && isValidId(userId)
+        && isValidProfile(incoming(), userId)
+        && incoming().userId == existing().userId
+        && incoming().diff(existing()).affectedKeys().hasOnly(['selectedState', 'practiceIndex', 'updatedAt']);
+      allow delete: if isOwner(userId) && isValidId(userId);
+
+      // Attempts Nested Subcollection Match Block
+      match /attempts/{attemptId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(attemptId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(attemptId)
+          && incoming().keys().hasAll(['questionId', 'answer', 'isCorrect', 'timestamp'])
+          && incoming().keys().size() == 4
+          && isValidAttempt(incoming());
+        allow update: if isOwner(userId)
+          && isValidId(userId)
+          && isValidId(attemptId)
+          && isValidAttempt(incoming())
+          && incoming().diff(existing()).affectedKeys().hasOnly(['answer', 'isCorrect', 'timestamp']);
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(attemptId);
+      }
+    }
+  }
+}

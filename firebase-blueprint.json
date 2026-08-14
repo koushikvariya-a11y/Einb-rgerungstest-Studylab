@@ -1,0 +1,65 @@
+{
+  "entities": {
+    "profile": {
+      "title": "UserProfile",
+      "description": "User profile containing federal state selection, active practice index, and synchronization timestamp",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "The UID of the user matching request.auth.uid"
+        },
+        "selectedState": {
+          "type": "string",
+          "description": "The chosen federal state"
+        },
+        "practiceIndex": {
+          "type": "number",
+          "description": "The current practice question index"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the profile was last updated"
+        }
+      },
+      "required": ["userId", "selectedState", "practiceIndex", "updatedAt"]
+    },
+    "attempt": {
+      "title": "QuizAttempt",
+      "description": "Saved answer choice attempt for a specific question",
+      "type": "object",
+      "properties": {
+        "questionId": {
+          "type": "number",
+          "description": "ID of the question attempted (1-460)"
+        },
+        "answer": {
+          "type": "string",
+          "enum": ["a", "b", "c", "d"],
+          "description": "The selected answer key"
+        },
+        "isCorrect": {
+          "type": "boolean",
+          "description": "Whether the answer was correct"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The ISO timestamp when the question was completed"
+        }
+      },
+      "required": ["questionId", "answer", "isCorrect", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "profile",
+      "description": "Stores user profile and practice preferences"
+    },
+    "/users/{userId}/attempts/{attemptId}": {
+      "schema": "attempt",
+      "description": "Stores granular history of user quiz attempts"
+    }
+  }
+}

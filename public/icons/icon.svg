@@ -1,0 +1,11 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background with subtle warm tint for rounded container compatibility -->
+  <rect width="512" height="512" rx="96" fill="#f6f1e6"/>
+  <!-- Main Blue Bauhaus Block with Hard Shadow -->
+  <rect x="76" y="76" width="360" height="360" rx="32" fill="#111111"/>
+  <rect x="64" y="64" width="360" height="360" rx="28" fill="#1d4ed8" stroke="#111111" stroke-width="24"/>
+  <!-- Top Right Yellow Accent Square -->
+  <rect x="360" y="44" width="96" height="96" rx="8" fill="#f4b400" stroke="#111111" stroke-width="20"/>
+  <!-- Typography "DE" -->
+  <text x="236" y="305" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Space Grotesk', sans-serif" font-size="190" font-weight="950" fill="#ffffff" text-anchor="middle" letter-spacing="-6">DE</text>
+</svg>
