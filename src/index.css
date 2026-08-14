@@ -140,8 +140,12 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
   color: var(--ink);
   padding: 0 10px;
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 400;
   box-shadow: 2px 2px 0 var(--ink);
+}
+
+.state-select select option {
+  font-weight: 400;
 }
 
 .main-nav { display: flex; align-items: stretch; gap: 4px; }
