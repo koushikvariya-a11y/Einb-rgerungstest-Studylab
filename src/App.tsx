@@ -25,7 +25,6 @@ import {
   setDoc,
   getDocs,
   collection,
-  getDocFromServer,
 } from "firebase/firestore";
 import {
   Cloud,
@@ -344,7 +343,17 @@ function DashboardView({
   onOpenAuthModal: () => void;
   user: User | null;
 }) {
-  const attemptEntries = Object.entries(attempts);
+  const studyQuestionIdSet = useMemo(
+    () => new Set(studyQuestions.map((q) => q.id)),
+    [studyQuestions]
+  );
+  const attemptEntries = useMemo(
+    () =>
+      Object.entries(attempts).filter(([idStr]) =>
+        studyQuestionIdSet.has(Number(idStr))
+      ),
+    [attempts, studyQuestionIdSet]
+  );
   const correct = attemptEntries.filter(([, attempt]) => attempt.isCorrect).length;
   const accuracy = attemptEntries.length
     ? Math.round((correct / attemptEntries.length) * 100)
@@ -353,7 +362,7 @@ function DashboardView({
   const imageQuestions = studyQuestions.filter(
     (question) => IMAGE_BY_ID[question.id]
   ).length;
-  const recent = attemptEntries
+  const recent = [...attemptEntries]
     .sort(([, a], [, b]) => Date.parse(b.timestamp) - Date.parse(a.timestamp))
     .slice(0, 4);
 
@@ -912,12 +921,14 @@ function ExamView({
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<number, AnswerKey>>({});
   const [finished, setFinished] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
   const [expandedImage, setExpandedImage] = useState<string | null>(null);
 
   useEffect(() => {
     setIndex(0);
     setAnswers({});
     setFinished(false);
+    setReviewing(false);
   }, [questions]);
 
   if (!questions.length)
@@ -929,7 +940,7 @@ function ExamView({
   const answeredCount = Object.keys(answers).length;
   const activeQuestion = questions[index];
 
-  if (finished) {
+  if (finished && !reviewing) {
     const passed = score >= 17;
     const missed = questions.filter(
       (question) => answers[question.id] !== question.correctAnswer
@@ -970,11 +981,11 @@ function ExamView({
               id="review-exam-btn"
               className="button secondary"
               onClick={() => {
-                setFinished(false);
+                setReviewing(true);
                 setIndex(0);
               }}
             >
-              Review this attempt
+              Review all questions
             </button>
           </div>
         </section>
@@ -982,8 +993,8 @@ function ExamView({
         {missed.length > 0 && (
           <section className="panel missed-panel" id="missed-questions-panel">
             <div className="section-heading compact">
-              <h2>Questions to review</h2>
-              <span>{missed.length}</span>
+              <h2>Questions to review ({missed.length} missed)</h2>
+              <span>Click a question to inspect answer & explanation</span>
             </div>
             <div className="missed-grid" id="missed-questions-grid">
               {missed.map((question) => (
@@ -991,7 +1002,7 @@ function ExamView({
                   key={question.id}
                   id={`missed-q-${question.id}`}
                   onClick={() => {
-                    setFinished(false);
+                    setReviewing(true);
                     setIndex(
                       questions.findIndex((item) => item.id === question.id)
                     );
@@ -1003,6 +1014,119 @@ function ExamView({
               ))}
             </div>
           </section>
+        )}
+      </div>
+    );
+  }
+
+  if (finished && reviewing) {
+    return (
+      <div className="view-stack" id="exam-review-view">
+        <section className="exam-toolbar panel" id="exam-review-toolbar">
+          <div>
+            <span className="eyebrow blue">EXAM REVIEW · AUSWERTUNG</span>
+            <h1>Question {index + 1} of 33</h1>
+          </div>
+          <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+            <button
+              id="back-to-results-btn"
+              className="button secondary"
+              onClick={() => setReviewing(false)}
+            >
+              ← Back to score summary
+            </button>
+            <button
+              id="retake-from-review-btn"
+              className="button primary"
+              onClick={onStart}
+            >
+              Start new test
+            </button>
+          </div>
+        </section>
+
+        <div
+          className="exam-map"
+          id="exam-review-map"
+          aria-label="Exam review navigation"
+        >
+          {questions.map((question, questionIndex) => {
+            const isQCorrect = answers[question.id] === question.correctAnswer;
+            const isCurrent = questionIndex === index;
+            return (
+              <button
+                key={question.id}
+                id={`exam-map-q-${questionIndex + 1}`}
+                className={`${isCurrent ? "active" : ""} ${
+                  isQCorrect ? "correct" : "wrong"
+                }`}
+                onClick={() => setIndex(questionIndex)}
+                aria-label={`Question ${questionIndex + 1}, ${
+                  isQCorrect ? "Correct" : "Incorrect"
+                }`}
+              >
+                {questionIndex + 1}
+              </button>
+            );
+          })}
+        </div>
+
+        <QuestionCard
+          key={activeQuestion.id}
+          question={activeQuestion}
+          selectedAnswer={answers[activeQuestion.id]}
+          onAnswer={() => {}}
+          onExpandImage={setExpandedImage}
+          revealResult={true}
+          showTranslation={true}
+        />
+
+        <div className="question-navigation" id="exam-review-navigation">
+          <button
+            id="review-prev-btn"
+            className="button secondary"
+            disabled={index === 0}
+            onClick={() => setIndex((current) => Math.max(0, current - 1))}
+          >
+            ← Previous
+          </button>
+          <span>
+            {index + 1} / 33 · {score} / 33 Correct
+          </span>
+          <button
+            id="review-next-btn"
+            className="button primary"
+            disabled={index === questions.length - 1}
+            onClick={() =>
+              setIndex((current) => Math.min(questions.length - 1, current + 1))
+            }
+          >
+            Next →
+          </button>
+        </div>
+
+        {expandedImage && (
+          <div
+            id="exam-lightbox"
+            className="image-lightbox"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Vergrößerte Abbildung"
+            onClick={() => setExpandedImage(null)}
+          >
+            <button
+              id="exam-lightbox-close"
+              className="lightbox-close"
+              onClick={() => setExpandedImage(null)}
+            >
+              Close ×
+            </button>
+            <img
+              src={expandedImage}
+              alt={`Vergrößerte Abbildung für ${getQuestionLabel(activeQuestion)}`}
+              onClick={(event) => event.stopPropagation()}
+            />
+          </div>
         )}
       </div>
     );
@@ -1086,6 +1210,7 @@ function ExamView({
             onClick={() => {
               onSaveExamAttempts(answers);
               setFinished(true);
+              setReviewing(false);
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
           >
@@ -1103,6 +1228,7 @@ function ExamView({
             onClick={() => {
               onSaveExamAttempts(answers);
               setFinished(true);
+              setReviewing(false);
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}
           >
@@ -1280,25 +1406,6 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [syncing, setSyncing] = useState<boolean>(false);
   const [authModalOpen, setAuthModalOpen] = useState<boolean>(false);
-
-  // Firestore connection health check on boot
-  useEffect(() => {
-    async function testConnection() {
-      try {
-        await getDocFromServer(doc(db, "connection-test", "ping"));
-      } catch (error) {
-        if (
-          error instanceof Error &&
-          error.message.includes("the client is offline")
-        ) {
-          console.warn(
-            "Firebase client is currently offline. Local fallback active."
-          );
-        }
-      }
-    }
-    testConnection();
-  }, []);
 
   // Stabilize local values with refs to prevent stale closure loops during async auth events
   const userRef = useRef<User | null>(user);

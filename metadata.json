@@ -2,7 +2,5 @@
   "name": "Einbürgerungstest Study Lab",
   "description": "A comprehensive bilingual study lab for the German citizenship test (Leben in Deutschland / Einbürgerungstest) featuring all 460 questions, 43 official image questions, practice & mock exam modes, and Firebase cross-device synchronization.",
   "requestFramePermissions": [],
-  "majorCapabilities": [
-    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
-  ]
+  "majorCapabilities": []
 }

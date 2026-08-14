@@ -496,6 +496,8 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .exam-map { display: grid; grid-template-columns: repeat(11, minmax(0, 1fr)); gap: 5px; }
 .exam-map button { aspect-ratio: 1; min-width: 0; border: 2px solid var(--ink); background: white; font-size: 9px; font-weight: 950; }
 .exam-map button.answered { background: #dbeafe; }
+.exam-map button.correct { background: #bbf7d0; color: #14532d; }
+.exam-map button.wrong { background: #fecaca; color: #7f1d1d; }
 .exam-map button.active { background: var(--blue); color: white; box-shadow: 2px 2px 0 var(--ink); transform: translate(-1px, -1px); }
 .submit-banner { display: flex; align-items: center; justify-content: space-between; gap: 16px; background: var(--yellow); }
 .submit-banner span { font-size: 12px; font-weight: 900; }
