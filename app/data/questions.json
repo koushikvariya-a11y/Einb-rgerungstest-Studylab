@@ -110,7 +110,7 @@
       "c": "Die Wählerin/der Wähler darf bei der Wahl weder beeinflusst noch zu einer bestimmten Stimmabgabe gezwungen werden und keine Nachteile durch die Wahl haben.",
       "d": "Alle wahlberechtigten Personen müssen wählen."
     },
-    "correctAnswer": "b",
+    "correctAnswer": "c",
     "translations": {
       "en": {
         "text": "Elections in Germany are free. What does this mean?",
@@ -1770,7 +1770,7 @@
       "c": "auf Schloss Bellevue, dem Amtssitz der Bundespräsidentin/des Bundespräsidenten, um Staatsgäste zu empfangen.",
       "d": "in Berlin, weil sich dort das Bundeskanzleramt und der Bundestag befinden."
     },
-    "correctAnswer": "b",
+    "correctAnswer": "d",
     "translations": {
       "en": {
         "text": "Where is the German Federal Chancellor most often located? Most often, he/she is...",
@@ -4599,7 +4599,7 @@
       "c": "ein Vorschlag der Bundesregierung",
       "d": "ein Vorschlag der UdSSR"
     },
-    "correctAnswer": "c",
+    "correctAnswer": "a",
     "translations": {
       "en": {
         "text": "On what legal basis was the State of Israel founded?",

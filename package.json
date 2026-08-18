@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "prebuild": "npm run generate:icons && npm run verify:assets",
+    "prebuild": "npm run generate:icons && npm run verify:assets && npm run verify:answers",
     "generate:icons": "node scripts/generate-icons.mjs",
     "verify:assets": "node scripts/verify-assets.mjs",
+    "verify:answers": "node scripts/verify-answers.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "tsc --noEmit"
